@@ -7,7 +7,7 @@ const calcTime = (timestamp) => {
 
   if (hour > 0) return `${hour}시간 전`;
   else if (minute > 0) return `${minute}분 전`;
-  else if (second >= 0) return `${second}초 전`;
+  else if (second > 0) return `${second}초 전`;
   else "방금 전";
 };
 
@@ -15,7 +15,7 @@ const renderData = (data) => {
   const main = document.querySelector("main");
 
   //최신글로 정렬해주기 reverse
-  data.reverse().forEach((obj) => {
+  data.reverse().forEach(async (obj) => {
     const div = document.createElement("div");
     div.className = "item-list";
 
@@ -23,7 +23,10 @@ const renderData = (data) => {
     imgDiv.className = "item-list__img";
 
     const img = document.createElement("img");
-    img.src = "assets/image.svg";
+    const res = await fetch(`/images/${obj.id}`);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    img.src = url;
 
     const infoDiv = document.createElement("div");
     infoDiv.className = "item-list__info";
