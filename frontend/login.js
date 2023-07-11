@@ -12,6 +12,8 @@ const handleSubmitForm = async (event) => {
   });
 
   const data = await res.json();
+  console.log("엑세스토큰", data.access_token);
+
   if (res.status === 200) {
     console.log(res.status);
     alert("로그인이 성공했어요.");
