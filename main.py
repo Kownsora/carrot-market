@@ -2,25 +2,53 @@ from fastapi import FastAPI, UploadFile, Form, Response
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from fastapi.staticfiles import StaticFiles
+from fastapi_login import LoginManager
+from fastapi_login.exceptions import InvalidCredentialsException
 from typing import Annotated
 import sqlite3
 
 con = sqlite3.connect('db.db', check_same_thread=False)
 cur = con.cursor()
 
-cur.execute(f"""
-            CREATE TABLE IF NOT EXISTS items (
-                id integer primary key,
-                title text not null,
-                image BLOB,
-                price integer not null,
-                description text,
-                place text not null,
-                insertAt integer not null
-            );
-            """)
-
 app = FastAPI()
+
+SERCRET = "super-coding"
+manager = LoginManager(SERCRET,'/login')
+
+@manager.user_loader()
+def query_user(id):
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    user = cur.execute(f"""
+                       SELECT * from user WHERE id = '{id}'
+                       """).fetchone()
+    return user
+
+@app.post('/login')
+def login(id:Annotated[str,Form()], 
+           password:Annotated[str,Form()]):
+    user = query_user(id)
+    if not user:
+        raise InvalidCredentialsException
+    elif password != user['password']:
+        raise InvalidCredentialsException
+    
+    return '200'
+
+
+@app.post('/signup')
+def signup(id:Annotated[str,Form()], 
+           password:Annotated[str,Form()],
+           name:Annotated[str,Form()],
+           email:Annotated[str,Form()]):
+    
+    #TODO : 이미 가입되어 있는 회원인지 체크
+    cur.execute(f"""
+                INSERT INTO user(id,name,email,password)
+                VALUES ('{id}','{name}','{email}','{password}' )
+                """)
+    con.commit()
+    return '200'
 
 @app.post('/items')
 async def create_itme(image:UploadFile, 
@@ -57,19 +85,5 @@ async def get_image(item_id):
                               SELECT image From items WHERE id={item_id}
                               """).fetchone()[0]
     return Response(content=bytes.fromhex(image_bytes), media_type='image/*')
-    
-@app.post('/signup')
-def signup(id:Annotated[str,Form()], 
-           password:Annotated[str,Form()],
-           name:Annotated[str,Form()],
-           email:Annotated[str,Form()]):
-    
-    #TODO : 이미 가입되어 있는 회원인지 체크
-    cur.execute(f"""
-                INSERT INTO user(id,name,email,password)
-                VALUES ('{id}','{name}','{email}','{password}' )
-                """)
-    con.commit()
-    return '200'
 
 app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
