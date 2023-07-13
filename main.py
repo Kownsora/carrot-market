@@ -33,8 +33,13 @@ def login(id:Annotated[str,Form()],
     elif password != user['password']:
         raise InvalidCredentialsException
     
+    #JWT 디코딩 가능, access_token 생성
     access_token = manager.create_access_token(data={
-        'myname':'hi!'
+        'sub': {
+            'id':user['id'],
+            'name':user['name'],
+            'email':user['email']
+        }
     })
     
     return {'access_token':access_token}

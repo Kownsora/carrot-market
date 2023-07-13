@@ -12,10 +12,11 @@ const handleSubmitForm = async (event) => {
   });
 
   const data = await res.json();
-  console.log("엑세스토큰", data.access_token);
+  const accessToken = data.access_token;
+  console.log("엑세스토큰", accessToken);
 
   if (res.status === 200) {
-    console.log(res.status);
+    window.location.pathname = "/";
     alert("로그인이 성공했어요.");
   } else if (res.status === 401) {
     alert("ID 혹은 PASSWORD가 틀렀습니다.");
